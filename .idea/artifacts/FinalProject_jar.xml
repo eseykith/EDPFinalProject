@@ -1,0 +1,21 @@
+<component name="ArtifactManager">
+  <artifact type="jar" name="FinalProject:jar">
+    <output-path>$PROJECT_DIR$/out/artifacts/FinalProject_jar</output-path>
+    <root id="archive" name="FinalProject.jar">
+      <element id="module-output" name="FinalProject" />
+      <element id="extracted-dir" path="$USER_HOME$/openjfx-24.0.1_windows-x64_bin-sdk/javafx-sdk-24.0.1/lib/javafx-swt.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/openjfx-24.0.1_windows-x64_bin-sdk/javafx-sdk-24.0.1/lib/jdk.jsobject.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/openjfx-24.0.1_windows-x64_bin-sdk/javafx-sdk-24.0.1/lib/javafx.graphics.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/openjfx-24.0.1_windows-x64_bin-sdk/javafx-sdk-24.0.1/lib/javafx.fxml.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/openjfx-24.0.1_windows-x64_bin-sdk/javafx-sdk-24.0.1/lib/javafx.swing.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/sqljdbc_12.10/enu/jars/mssql-jdbc-12.10.0.jre8.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/openjfx-24.0.1_windows-x64_bin-sdk/javafx-sdk-24.0.1/lib/javafx.controls.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/openjfx-24.0.1_windows-x64_bin-sdk/javafx-sdk-24.0.1/lib/javafx.base.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/openjfx-24.0.1_windows-x64_bin-sdk/javafx-sdk-24.0.1/lib/jfx.incubator.input.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/openjfx-24.0.1_windows-x64_bin-sdk/javafx-sdk-24.0.1/lib/javafx.web.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/openjfx-24.0.1_windows-x64_bin-sdk/javafx-sdk-24.0.1/lib/javafx.media.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/openjfx-24.0.1_windows-x64_bin-sdk/javafx-sdk-24.0.1/lib/jfx.incubator.richtext.jar" path-in-jar="/" />
+      <element id="extracted-dir" path="$USER_HOME$/mysql-connector-j-9.3.0/mysql-connector-j-9.3.0/mysql-connector-j-9.3.0.jar" path-in-jar="/" />
+    </root>
+  </artifact>
+</component>
