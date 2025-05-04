@@ -7,132 +7,255 @@ import javafx.scene.image.*;
 import javafx.scene.layout.*;
 import javafx.scene.text.*;
 import javafx.stage.Stage;
+import javafx.event.ActionEvent;
+import javafx.event.EventHandler;
 
-public class AdminDashboard extends Stage{
+public class AdminDashboard extends Stage {
     private HotelController controller;
     private TableView<Room> roomTable;
     private TableView<Guest> guestTable;
     private TableView<Reservation> reservationTable;
     private TableView<Payment> paymentTable;
 
-    private TextField roomSearchField, guestSearchField, reserveSearchField;
-    private Button roomSearchButton, guestSearchButton, reserveSearchButton;
+    private TextField roomSearchField, guestSearchField;
+    private Button roomSearchButton, guestSearchButton;
+
+    // Room Form Fields and Buttons
+    private TextField roomID, roomType, roomStatus, rate, occupancy;
+    private Button confirm, updateRoom, deleteRoom, createRoom;
+    private VBox formContainer;
+
+    private VBox centerContent;
+    private VBox tableBox;
+    private BorderPane root;
+    private Stage primaryStage;
 
     public AdminDashboard(HotelController controller) {
         this.controller = controller;
-
     }
 
     public void start(Stage stage) {
+        this.primaryStage = stage;
         stage.setTitle("Admin Dashboard");
 
-        VBox sideMenu = new VBox(20);
-            sideMenu.setPadding(new Insets(20));
-            sideMenu.setStyle("-fx-background-color: #2E3A59;");
-            sideMenu.setPrefWidth(200);
+        // Side Menu
+        VBox sideMenu = createSideMenu();
 
-        BorderPane root = new BorderPane();
-            root.setLeft(sideMenu);
+        // Root Layout
+        root = new BorderPane();
+        root.setLeft(sideMenu);
+
+        // Center Content
+        centerContent = createCenterContent();
+
+        ScrollPane scrollPane = new ScrollPane(centerContent);
+        scrollPane.setFitToWidth(true);
+        scrollPane.setPannable(true);
+        root.setCenter(scrollPane);
+
+        Scene scene = new Scene(root, 1000, 600);
+        stage.setScene(scene);
+        stage.show();
+    }
+
+    // Create Side Menu with buttons and logout at bottom
+    private VBox createSideMenu() {
+        VBox sideMenu = new VBox();
+        sideMenu.setPadding(new Insets(20));
+        sideMenu.setStyle("-fx-background-color: #2E3A59;");
+        sideMenu.setPrefWidth(200);
+        sideMenu.setSpacing(20);
 
         Label services = new Label("Services");
-            services.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-            services.setStyle("-fx-text-fill: #FFFFFF;");
+        services.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        services.setStyle("-fx-text-fill: #FFFFFF;");
 
-        Button manageRoom = new Button("Manage Rooms");
-        Button manageGuest = new Button("Manage Guest");
-        Button managePayment = new Button("Manage Payment");
-        Button manageReservation = new Button("Manage Reservation");
+        Button back = new Button("Back");
+        back.setMaxWidth(Double.MAX_VALUE);
+        back.setStyle("-fx-background-color: #FFFFFF; -fx-font-weight: bold;");
+        back.setOnAction(event -> {
+            AdminDashboard adminDashboard = new AdminDashboard(controller);
+            try {
+                adminDashboard.start(primaryStage);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
 
-        for (Button button : new Button[]{manageRoom, manageGuest, managePayment, manageReservation}) {
-            button.setPrefHeight(150);
-            button.setMaxWidth(Double.MAX_VALUE);
-            button.setStyle("-fx-background-color: #4C8BF5; -fx-text-fill: white; -fx-font-weight: bold;");
-            button.setOnMouseEntered(e -> button.setStyle("-fx-background-color: #6A9FF6; -fx-text-fill: white; -fx-font-size: 16px;"));
-            button.setOnMouseExited(e -> button.setStyle("-fx-background-color: #4C8BF5; -fx-text-fill: white;"));
-        }
+        Button manageRoomBtn = createSideButton("Rooms", e -> manageRoom());
+        Button manageGuestBtn = createSideButton("Guest", e -> manageGuest());
+        Button managePaymentBtn = createSideButton("Payment", e -> managePayment());
+        Button manageReservationBtn = createSideButton("Reservation", e -> manageReservation());
+
+        // Spacer Pane to push logout to bottom
+        Region spacer = new Region();
+        VBox.setVgrow(spacer, Priority.ALWAYS);
+
         Button logoutButton = new Button("Logout");
-            logoutButton.setStyle("-fx-background-color: #FF0000; -fx-text-fill: white; -fx-font-weight: bold;");
-            logoutButton.setOnMouseEntered(e -> logoutButton.setStyle("-fx-background-color: #f08080; -fx-text-fill: white;"));
-            logoutButton.setOnMouseExited(e -> logoutButton.setStyle("-fx-background-color: #FF0000; -fx-text-fill: white;"));
-
+        logoutButton.setMaxWidth(Double.MAX_VALUE);
+        logoutButton.setStyle("-fx-background-color: #FF0000; -fx-text-fill: white; -fx-font-weight: bold;");
+        logoutButton.setOnMouseEntered(e -> logoutButton.setStyle("-fx-background-color: #f08080; -fx-text-fill: white;"));
+        logoutButton.setOnMouseExited(e -> logoutButton.setStyle("-fx-background-color: #FF0000; -fx-text-fill: white;"));
         logoutButton.setOnAction(e -> {
             Alert confirmAlert = new Alert(Alert.AlertType.CONFIRMATION);
             confirmAlert.setTitle("Confirm Logout");
             confirmAlert.setHeaderText(null);
             confirmAlert.setContentText("Are you sure you want to logout?");
-
             confirmAlert.showAndWait().ifPresent(response -> {
                 if (response == ButtonType.OK) {
-                    new MainGUI(controller).start(new Stage()); // Open main GUI
-                    stage.close();
+                    new MainGUI(controller).start(new Stage());
+                    primaryStage.close();
                 }
-
             });
         });
 
-        sideMenu.getChildren().addAll(services, manageRoom, manageGuest, managePayment, manageReservation, logoutButton);
+        sideMenu.getChildren().addAll(
+                services,
+                back,
+                manageRoomBtn,
+                manageGuestBtn,
+                managePaymentBtn,
+                manageReservationBtn,
+                spacer,
+                logoutButton
+        );
 
-        VBox centerContent = new VBox(10);
-            centerContent.setPadding(new Insets(20));
-            centerContent.setAlignment(Pos.TOP_CENTER);
+        return sideMenu;
+    }
 
-        VBox tableBox = new VBox();
-            tableBox.setAlignment(Pos.CENTER);
-            tableBox.setPadding(new Insets(10));
+    private Button createSideButton(String text, EventHandler<ActionEvent> handler) {
+        Button button = new Button(text);
+        button.setPrefHeight(70);
+        button.setMaxWidth(Double.MAX_VALUE);
+        button.setStyle("-fx-background-color: #4C8BF5; -fx-text-fill: white; -fx-font-weight: bold;");
+        button.setOnMouseEntered(e -> button.setStyle("-fx-background-color: #6A9FF6; -fx-text-fill: white;-fx-font-weight: bold;"));
+        button.setOnMouseExited(e -> button.setStyle("-fx-background-color: #4C8BF5; -fx-text-fill: white;-fx-font-weight: bold;"));
+        button.setOnAction(handler);
+        return button;
+    }
 
-        // For Managing Rooms
-        TextField roomID = new TextField();
-            roomID.setPromptText("Room ID");
-            roomID.setPrefWidth(500);
-        TextField roomType = new TextField();
-            roomType.setPromptText("Room Type");
-        TextField roomStatus = new TextField();
-            roomStatus.setPromptText("Room Status");
-        TextField rate = new TextField();
-            rate.setPromptText("Rate");
-        TextField occupancy = new TextField();
-            occupancy.setPromptText("Occupancy");
+    private VBox createCenterContent() {
+        VBox vbox = new VBox(10);
+        vbox.setPadding(new Insets(20));
+        vbox.setAlignment(Pos.TOP_CENTER);
+        vbox.setStyle("-fx-background-color: #F4F7FA;");
+
+        Label titleLabel = new Label("AI HOTEL RESERVATION SYSTEM");
+        titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        titleLabel.setStyle("-fx-text-fill: #1E5AA8;");
+        titleLabel.setWrapText(true);
+        titleLabel.setAlignment(Pos.CENTER);
+        titleLabel.setMaxWidth(Double.MAX_VALUE);
+
+        Image image = new Image("/hotelimg.png");
+        ImageView imageView = new ImageView(image);
+        imageView.setFitWidth(750);
+        imageView.setPreserveRatio(true);
+        imageView.setSmooth(true);
+
+        vbox.getChildren().addAll(titleLabel, imageView);
+        return vbox;
+    }
+
+    // Room Management UI and Logic
+    private void manageRoom() {
+        centerContent.getChildren().clear();
+
+        Label header = new Label("Check Available Room");
+        header.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        header.setStyle("-fx-text-fill: #1E5AA8;");
+        header.setAlignment(Pos.CENTER);
+
+        // Initialize search UI
+        roomSearchField = new TextField();
+        roomSearchField.setPromptText("Search Room...");
+        roomSearchButton = new Button("Search");
+        roomSearchButton.setStyle("-fx-background-color: #4C8BF5; -fx-text-fill: white; -fx-font-weight: bold;");
+        roomSearchButton.setOnAction(e -> searchRooms());
+
+        HBox searchBox = new HBox(10, roomSearchField, roomSearchButton);
+        searchBox.setAlignment(Pos.CENTER);
+        searchBox.setPadding(new Insets(10));
+
+        // Table and buttons box
+        tableBox = new VBox();
+        tableBox.setAlignment(Pos.CENTER);
+        tableBox.setPadding(new Insets(10));
+        tableBox.getChildren().clear();
+
+        roomTable = controller.loadRooms();
+
+        VBox tableAndButton = new VBox(10, searchBox, roomTable);
+        tableAndButton.setAlignment(Pos.CENTER);
+        tableAndButton.setPadding(new Insets(10));
+
+        createRoom = new Button("CREATE");
+        createRoom.setStyle("-fx-background-color: #4C8BF5; -fx-text-fill: white; -fx-font-weight: bold;");
+
+        updateRoom = new Button("UPDATE");
+        updateRoom.setStyle("-fx-background-color: #f0ad4e; -fx-text-fill: white; -fx-font-weight: bold;");
+
+        deleteRoom = new Button("DELETE");
+        deleteRoom.setStyle("-fx-background-color: #d9534f; -fx-text-fill: white; -fx-font-weight: bold;");
+
+        HBox buttons = new HBox(10, createRoom, updateRoom, deleteRoom);
+        buttons.setAlignment(Pos.CENTER);
+        buttons.setPadding(new Insets(20));
+
+        // Create room form hidden initially
+        createRoomForm();
+
+        tableBox.getChildren().addAll(tableAndButton, buttons, formContainer);
+
+        centerContent.getChildren().addAll(header, tableBox);
+    }
+
+    private void createRoomForm() {
+        // Initialize Room Form fields and labels
+        roomID = new TextField();
+        roomID.setPromptText("Room ID");
+        roomID.setPrefWidth(500);
+        roomType = new TextField();
+        roomType.setPromptText("Room Type");
+        roomStatus = new TextField();
+        roomStatus.setPromptText("Room Status");
+        rate = new TextField();
+        rate.setPromptText("Rate");
+        occupancy = new TextField();
+        occupancy.setPromptText("Occupancy");
 
         Label roomIDLabel = new Label("Room ID:");
-            Label roomTypeLabel = new Label("Room Type:");
-            Label roomStatusLabel = new Label("Room Status:");
-            Label rateLabel = new Label("Rate:");
-            Label occupancyLabel = new Label("Occupancy:");
+        Label roomTypeLabel = new Label("Room Type:");
+        Label roomStatusLabel = new Label("Room Status:");
+        Label rateLabel = new Label("Rate:");
+        Label occupancyLabel = new Label("Occupancy:");
 
         for (Label label : new Label[]{roomIDLabel, roomTypeLabel, rateLabel, occupancyLabel, roomStatusLabel}) {
             label.setStyle("-fx-text-fill: #2E3A59; -fx-font-weight: bold;");
         }
 
         GridPane roomForm = new GridPane();
-            roomForm.setHgap(10);
-            roomForm.setVgap(15);
-            roomForm.setPadding(new Insets(20));
-            roomForm.add(roomIDLabel, 0, 0);
-            roomForm.add(roomID, 1, 0);
-            roomForm.add(roomTypeLabel, 0, 1);
-            roomForm.add(roomType, 1, 1);
-            roomForm.add(rateLabel, 0, 2);
-            roomForm.add(rate, 1, 2);
-            roomForm.add(occupancyLabel, 0, 3);
-            roomForm.add(occupancy, 1, 3);
-            roomForm.add(roomStatusLabel, 0, 4);
-            roomForm.add(roomStatus, 1, 4);
+        roomForm.setHgap(10);
+        roomForm.setVgap(15);
+        roomForm.setPadding(new Insets(20));
+        roomForm.add(roomIDLabel, 0, 0);
+        roomForm.add(roomID, 1, 0);
+        roomForm.add(roomTypeLabel, 0, 1);
+        roomForm.add(roomType, 1, 1);
+        roomForm.add(rateLabel, 0, 2);
+        roomForm.add(rate, 1, 2);
+        roomForm.add(occupancyLabel, 0, 3);
+        roomForm.add(occupancy, 1, 3);
+        roomForm.add(roomStatusLabel, 0, 4);
+        roomForm.add(roomStatus, 1, 4);
 
-        Button confirm = new Button("Confirm");
-        Button updateRoom = new Button("UPDATE");
-        Button deleteRoom = new Button("DELETE");
-        Button createRoom = new Button("CREATE");
-            createRoom.setStyle("-fx-background-color: #4C8BF5; -fx-text-fill: white; -fx-font-weight: bold;");
-            updateRoom.setStyle("-fx-background-color: #f0ad4e; -fx-text-fill: white; -fx-font-weight: bold;");
-            deleteRoom.setStyle("-fx-background-color: #d9534f; -fx-text-fill: white; -fx-font-weight: bold;");
-            confirm.setStyle("-fx-background-color: #1E5AA8; -fx-text-fill: white; -fx-font-weight: bold;");
+        confirm = new Button("Confirm");
+        confirm.setStyle("-fx-background-color: #1E5AA8; -fx-text-fill: white; -fx-font-weight: bold;");
 
-
-        VBox formContainer = new VBox(10, roomForm, confirm);
-            formContainer.setPadding(new Insets(20));
-            formContainer.setAlignment(Pos.CENTER);
-            formContainer.setVisible(false);
-
+        formContainer = new VBox(10, roomForm, confirm);
+        formContainer.setPadding(new Insets(20));
+        formContainer.setAlignment(Pos.CENTER);
+        formContainer.setVisible(false);
         formContainer.setStyle(
                 "-fx-background-color: #ffffff; " +
                         "-fx-border-color: #dcdcdc; " +
@@ -141,17 +264,21 @@ public class AdminDashboard extends Stage{
                         "-fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2);"
         );
 
-
-        //Event Handling
+        // Event Handlers
         createRoom.setOnAction(ev -> {
             formContainer.setVisible(true);
             confirm.setVisible(true);
             roomID.setDisable(false);
-            roomID.clear(); roomType.clear(); roomStatus.clear(); rate.clear(); occupancy.clear();
+            roomID.clear();
+            roomType.clear();
+            roomStatus.clear();
+            rate.clear();
+            occupancy.clear();
         });
 
         confirm.setOnAction(event -> {
             try {
+                // Validate inputs
                 if (roomID.getText().isEmpty() || roomStatus.getText().isEmpty() || roomType.getText().isEmpty()
                         || rate.getText().isEmpty() || occupancy.getText().isEmpty()) {
                     new Alert(Alert.AlertType.WARNING, "Please fill in all fields.", ButtonType.OK).showAndWait();
@@ -164,10 +291,14 @@ public class AdminDashboard extends Stage{
                 Room room = new Room(roomID.getText(), roomStatus.getText(), roomType.getText(), roomRate, roomOccupancy);
                 controller.addRoom(room);
 
-                roomID.clear(); roomType.clear(); roomStatus.clear(); rate.clear(); occupancy.clear();
+                roomID.clear();
+                roomType.clear();
+                roomStatus.clear();
+                rate.clear();
+                occupancy.clear();
                 formContainer.setVisible(false);
                 confirm.setVisible(false);
-                manageRoom.fire(); // Refresh table
+                manageRoom(); // Refresh table
             } catch (NumberFormatException e) {
                 new Alert(Alert.AlertType.ERROR, "Rate must be a number and Occupancy must be an integer.", ButtonType.OK).showAndWait();
             } catch (Exception e) {
@@ -181,7 +312,6 @@ public class AdminDashboard extends Stage{
                 new Alert(Alert.AlertType.WARNING, "Please select a room to update.", ButtonType.OK).showAndWait();
                 return;
             }
-
             roomID.setText(selected.getRoomID());
             roomType.setText(selected.getRoomType());
             roomStatus.setText(selected.getRoomStatus());
@@ -190,8 +320,9 @@ public class AdminDashboard extends Stage{
             roomID.setDisable(true);
 
             formContainer.setVisible(true);
-            confirm.setVisible(false); // hide create confirm
+            confirm.setVisible(false); // hide create confirm button if visible
 
+            // Create update confirm button if not already added
             Button confirmUpdate = new Button("Update Confirm");
             confirmUpdate.setStyle("-fx-background-color: #28a745; -fx-text-fill: white; -fx-font-weight: bold;");
             if (!formContainer.getChildren().contains(confirmUpdate)) {
@@ -205,12 +336,11 @@ public class AdminDashboard extends Stage{
                     selected.setOccupancyLimit(Integer.parseInt(occupancy.getText()));
                     selected.setRate(Double.parseDouble(rate.getText()));
 
-
                     controller.updateRoom(selected);
                     formContainer.setVisible(false);
                     formContainer.getChildren().remove(confirmUpdate);
                     roomID.setDisable(false);
-                    manageRoom.fire(); // Refresh table
+                    manageRoom(); // Refresh table
                 } catch (Exception ex) {
                     new Alert(Alert.AlertType.ERROR, "Failed to update room: " + ex.getMessage(), ButtonType.OK).showAndWait();
                 }
@@ -228,166 +358,16 @@ public class AdminDashboard extends Stage{
             confirmDelete.showAndWait().ifPresent(response -> {
                 if (response == ButtonType.YES) {
                     controller.deleteRoom(selected.getRoomID());
-                    manageRoom.fire(); // Refresh table
+                    manageRoom(); // Refresh table
                 }
             });
         });
-
-
-
-        manageRoom.setOnAction(e -> {
-            formContainer.setVisible(false);
-            root.setRight(null);
-            Label header = new Label("Check Available Room");
-                header.setStyle("-fx-text-fill: #1E5AA8;");
-                header.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-
-            // Initialize search field and button
-            roomSearchField = new TextField();
-            roomSearchField.setPromptText("Search Room...");
-            roomSearchButton = new Button("Search");
-            roomSearchButton.setStyle("-fx-background-color: #4C8BF5; -fx-text-fill: white; -fx-font-weight: bold;");
-
-            // Set up search button action
-            roomSearchButton.setOnAction(event -> searchRooms());
-
-            HBox searchBox = new HBox(10, roomSearchField, roomSearchButton);
-                searchBox.setAlignment(Pos.CENTER);
-                searchBox.setPadding(new Insets(10));
-            tableBox.getChildren().clear();
-            roomTable = controller.loadRooms();
-
-            VBox tableAndButton = new VBox(10, searchBox, roomTable); // Include search box here
-            HBox buttons = new HBox(10, createRoom, updateRoom, deleteRoom);
-                buttons.setAlignment(Pos.CENTER);
-                buttons.setStyle("-fx-padding: 20px;");
-                tableAndButton.setAlignment(Pos.CENTER);
-                tableAndButton.setPadding(new Insets(10));
-
-            tableBox.getChildren().addAll(tableAndButton, buttons, formContainer);
-            centerContent.getChildren().setAll(header, tableBox);
-        });
-
-
-
-        // For Managing Guest
-        manageGuest.setOnAction(event -> {
-            formContainer.setVisible(false);
-            root.setRight(null);
-
-            Label header = new Label("Guest");
-                header.setStyle("-fx-text-fill: #1E5AA8;");
-                header.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-
-            guestSearchField = new TextField();
-            guestSearchField.setPromptText("Search Guest...");
-            guestSearchButton = new Button("Search");
-            guestSearchButton.setStyle("-fx-background-color: #4C8BF5; -fx-text-fill: white; -fx-font-weight: bold;");
-
-
-            // Set up search button action
-            guestSearchButton.setOnAction(e -> searchGuest());
-
-            HBox guestSearchBox = new HBox(10, guestSearchField, guestSearchButton);
-                guestSearchBox.setAlignment(Pos.CENTER);
-                guestSearchBox.setPadding(new Insets(10));
-
-            tableBox.getChildren().clear();
-            guestTable = controller.loadGuest();
-
-            VBox tableAndButton = new VBox(10, guestSearchBox, guestTable);
-            HBox buttons = new HBox(); // Optional
-                buttons.setAlignment(Pos.CENTER);
-                buttons.setStyle("-fx-padding: 20px;");
-                tableAndButton.setAlignment(Pos.CENTER);
-                tableAndButton.setPadding(new Insets(10));
-
-            tableBox.getChildren().addAll(tableAndButton, buttons, formContainer);
-            centerContent.getChildren().setAll(header, tableBox);
-        });
-
-        managePayment.setOnAction(event -> {
-            formContainer.setVisible(false);
-            root.setRight(null);
-            Label header = new Label("Payment");
-                header.setStyle("-fx-text-fill: #1E5AA8;");
-                header.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-
-            tableBox.getChildren().clear();
-            paymentTable = controller.loadPayment();
-
-            VBox tableAndButton = new VBox(10, paymentTable);
-            HBox buttons = new HBox(); // Optional
-                buttons.setAlignment(Pos.CENTER);
-                buttons.setStyle("-fx-padding: 20px;");
-                tableAndButton.setAlignment(Pos.CENTER);
-                tableAndButton.setPadding(new Insets(10));
-
-            tableBox.getChildren().addAll(tableAndButton, buttons, formContainer);
-            centerContent.getChildren().setAll(header, tableBox);
-        });
-
-        manageReservation.setOnAction(event -> {
-            formContainer.setVisible(false);
-            root.setRight(null);
-            Label header = new Label("Reservation");
-                header.setStyle("-fx-text-fill: #1E5AA8;");
-                header.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-
-            tableBox.getChildren().clear();
-            reservationTable = controller.loadReservation();
-
-            // Add listener for selection to show reservation details
-            reservationTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
-                if (newSelection != null) {
-                    showReservationDetails(newSelection);
-                }
-            });
-
-            VBox tableAndButton = new VBox(10, reservationTable);
-            HBox buttons = new HBox(); // Optional buttons area
-                buttons.setAlignment(Pos.CENTER);
-                buttons.setStyle("-fx-padding: 20px;");
-                tableAndButton.setAlignment(Pos.CENTER);
-                tableAndButton.setPadding(new Insets(10));
-
-            tableBox.getChildren().addAll(tableAndButton, buttons, formContainer);
-            centerContent.getChildren().setAll(header, tableBox);
-        });
-
-        Image image = new Image("/hotelimg.png");
-            ImageView imageView = new ImageView(image);
-            imageView.setFitWidth(750);
-            imageView.setPreserveRatio(true);
-            imageView.setSmooth(true);
-
-        Label titleLabel = new Label("AI HOTEL RESERVATION SYSTEM");
-            titleLabel.setFont(Font.font("Arial", FontWeight.BOLD, 24));
-            titleLabel.setStyle("-fx-text-fill: #1E5AA8;");
-            titleLabel.setWrapText(true);
-            titleLabel.setAlignment(Pos.CENTER);
-            titleLabel.setMaxWidth(Double.MAX_VALUE);
-        HBox.setHgrow(titleLabel, Priority.ALWAYS);
-
-        centerContent.getChildren().addAll(titleLabel, imageView);
-        centerContent.setStyle("-fx-background-color: #F4F7FA;");
-        centerContent.setAlignment(Pos.TOP_CENTER);
-
-        ScrollPane scrollPane = new ScrollPane(centerContent);
-            scrollPane.setFitToWidth(true);
-            scrollPane.setPannable(true);
-            root.setCenter(scrollPane);
-
-        Scene scene = new Scene(root, 1000, 600);
-            stage.setScene(scene);
-            stage.show();
     }
 
-    // Method to search rooms based on the input in the search field
+    // Search for rooms using controller search
     private void searchRooms() {
         String searchText = roomSearchField.getText().toLowerCase().trim();
         if (roomTable != null) {
-            // Fetch filtered rooms from the controller
             try {
                 ObservableList<Room> filteredRooms = controller.searchRooms(searchText);
                 roomTable.setItems(filteredRooms);
@@ -397,10 +377,48 @@ public class AdminDashboard extends Stage{
         }
     }
 
+    // Guest Management UI and Logic
+    private void manageGuest() {
+        centerContent.getChildren().clear();
+
+        Label header = new Label("Guest");
+        header.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        header.setStyle("-fx-text-fill: #1E5AA8;");
+        header.setAlignment(Pos.CENTER);
+
+        guestSearchField = new TextField();
+        guestSearchField.setPromptText("Search Guest...");
+        guestSearchButton = new Button("Search");
+        guestSearchButton.setStyle("-fx-background-color: #4C8BF5; -fx-text-fill: white; -fx-font-weight: bold;");
+        guestSearchButton.setOnAction(e -> searchGuest());
+
+        HBox guestSearchBox = new HBox(10, guestSearchField, guestSearchButton);
+        guestSearchBox.setAlignment(Pos.CENTER);
+        guestSearchBox.setPadding(new Insets(10));
+
+        tableBox = new VBox();
+        tableBox.setAlignment(Pos.CENTER);
+        tableBox.setPadding(new Insets(10));
+        tableBox.getChildren().clear();
+
+        guestTable = controller.loadGuest();
+
+        VBox tableAndButton = new VBox(10, guestSearchBox, guestTable);
+        tableAndButton.setAlignment(Pos.CENTER);
+        tableAndButton.setPadding(new Insets(10));
+
+        HBox buttons = new HBox(); // Optional placeholder for guest buttons
+        buttons.setAlignment(Pos.CENTER);
+        buttons.setPadding(new Insets(20));
+
+        tableBox.getChildren().addAll(tableAndButton, buttons);
+        centerContent.getChildren().addAll(header, tableBox);
+    }
+
+    // Search guests using controller search
     private void searchGuest() {
         String searchText = guestSearchField.getText().toLowerCase().trim();
         if (guestTable != null) {
-            // Fetch filtered rooms from the controller
             try {
                 ObservableList<Guest> filteredGuest = controller.searchGuest(searchText);
                 guestTable.setItems(filteredGuest);
@@ -410,8 +428,71 @@ public class AdminDashboard extends Stage{
         }
     }
 
+    // Payment Management UI and Logic
+    private void managePayment() {
+        centerContent.getChildren().clear();
+
+        Label header = new Label("Payment");
+        header.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        header.setStyle("-fx-text-fill: #1E5AA8;");
+        header.setAlignment(Pos.CENTER);
+
+        tableBox = new VBox();
+        tableBox.setAlignment(Pos.CENTER);
+        tableBox.setPadding(new Insets(10));
+        tableBox.getChildren().clear();
+
+        paymentTable = controller.loadPayment();
+
+        VBox tableAndButton = new VBox(10, paymentTable);
+        tableAndButton.setAlignment(Pos.CENTER);
+        tableAndButton.setPadding(new Insets(10));
+
+        HBox buttons = new HBox(); // Optional buttons for payment
+        buttons.setAlignment(Pos.CENTER);
+        buttons.setPadding(new Insets(20));
+
+        tableBox.getChildren().addAll(tableAndButton, buttons);
+        centerContent.getChildren().addAll(header, tableBox);
+    }
+
+    // Reservation Management UI and Logic
+    private void manageReservation() {
+        centerContent.getChildren().clear();
+
+        Label header = new Label("Reservation");
+        header.setFont(Font.font("Arial", FontWeight.BOLD, 24));
+        header.setStyle("-fx-text-fill: #1E5AA8;");
+        header.setAlignment(Pos.CENTER);
+
+        tableBox = new VBox();
+        tableBox.setAlignment(Pos.CENTER);
+        tableBox.setPadding(new Insets(10));
+        tableBox.getChildren().clear();
+
+        reservationTable = controller.loadReservation();
+
+        // Show reservation details on selection
+        reservationTable.getSelectionModel().selectedItemProperty().addListener((obs, oldSelection, newSelection) -> {
+            if (newSelection != null) {
+                showReservationDetails(newSelection);
+            }
+        });
+
+        VBox tableAndButton = new VBox(10, reservationTable);
+        tableAndButton.setAlignment(Pos.CENTER);
+        tableAndButton.setPadding(new Insets(10));
+
+        HBox buttons = new HBox(); // Optional buttons for reservation
+        buttons.setAlignment(Pos.CENTER);
+        buttons.setPadding(new Insets(20));
+
+        tableBox.getChildren().addAll(tableAndButton, buttons);
+        centerContent.getChildren().addAll(header, tableBox);
+    }
+
+    // Show detailed reservation info dialog
     private void showReservationDetails(Reservation reservation) {
-        // Fetch details from controller
         ReservationDetails details = controller.getReservationDetails(reservation.getReservationID());
         if (details == null) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -424,7 +505,8 @@ public class AdminDashboard extends Stage{
 
         Dialog<Void> dialog = new Dialog<>();
         dialog.setTitle("Reservation Details");
-        dialog.getDialogPane().setPrefSize(400, 200);
+        dialog.getDialogPane().setPrefSize(400, 300);
+
         GridPane grid = new GridPane();
         grid.setHgap(10);
         grid.setVgap(10);
@@ -447,9 +529,9 @@ public class AdminDashboard extends Stage{
 
         grid.setAlignment(Pos.CENTER);
         grid.setStyle("-fx-background-color: #F4F7FA");
+
         dialog.getDialogPane().setContent(grid);
         dialog.getDialogPane().getButtonTypes().add(ButtonType.OK);
         dialog.showAndWait();
     }
-
 }

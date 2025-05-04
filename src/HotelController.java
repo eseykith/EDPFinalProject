@@ -14,17 +14,20 @@
     public class HotelController {
         // Method to add a guest
         public void addGuest(Guest guest) {
-            String sql = "INSERT INTO Guest (FirstName, LastName, City, Province, ContactNo, Email) VALUES (?, ?, ?, ?, ?, ?)";
+            String sql = "INSERT INTO Guest (GuestID, FirstName, LastName, City, Province, ContactNo, Email) VALUES (?,?, ?, ?, ?, ?, ?)";
             try (Connection connection = DatabaseConnection.getConnection();
                  PreparedStatement preparedStatement = connection.prepareStatement(sql)) {
-                preparedStatement.setString(1, guest.getFirstName());
-                preparedStatement.setString(2, guest.getLastName());
-                preparedStatement.setString(3, guest.getCity());
-                preparedStatement.setString(4, guest.getProvince());
-                preparedStatement.setString(5, guest.getContactNo());
-                preparedStatement.setString(6, guest.getEmail());
+                preparedStatement.setString(1, guest.getGuestID());
+                preparedStatement.setString(2, guest.getFirstName());
+                preparedStatement.setString(3, guest.getLastName());
+                preparedStatement.setString(4, guest.getCity());
+                preparedStatement.setString(5, guest.getProvince());
+                preparedStatement.setString(6, guest.getContactNo());
+                preparedStatement.setString(7, guest.getEmail());
                 preparedStatement.executeUpdate();
                 showAlert("Success", "Guest added successfully!");
+
+
             } catch (SQLException e) {
                 e.printStackTrace();
                 showAlert("Error", "Failed to add guest: " + e.getMessage());
@@ -260,29 +263,33 @@
 
             TableColumn<Room, String> roomIDCol = new TableColumn<>("Room ID");
             roomIDCol.setCellValueFactory(new PropertyValueFactory<>("roomID"));
-            roomIDCol.setPrefWidth(150); // Set preferred width
 
             TableColumn<Room, String> roomTypeCol = new TableColumn<>("Room Type");
             roomTypeCol.setCellValueFactory(new PropertyValueFactory<>("roomType"));
-            roomTypeCol.setPrefWidth(150); // Set preferred width
 
             TableColumn<Room, Double> rateCol = new TableColumn<>("Rate");
             rateCol.setCellValueFactory(new PropertyValueFactory<>("rate"));
-            rateCol.setPrefWidth(150); // Set preferred width
 
             TableColumn<Room, Integer> occupancyCol = new TableColumn<>("Occupancy Limit");
             occupancyCol.setCellValueFactory(new PropertyValueFactory<>("occupancyLimit"));
-            occupancyCol.setPrefWidth(150); // Set preferred width
 
             TableColumn<Room, String> statusCol = new TableColumn<>("Room Status");
             statusCol.setCellValueFactory(new PropertyValueFactory<>("roomStatus"));
-            statusCol.setPrefWidth(150); // Set preferred width
+
+            tableView.setPrefWidth(600);
+            tableView.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+            // Equal width: bind each column to 1/5th of table width
+            int numCols = 5;
+            roomIDCol.prefWidthProperty().bind(tableView.widthProperty().divide(numCols));
+            roomTypeCol.prefWidthProperty().bind(tableView.widthProperty().divide(numCols));
+            rateCol.prefWidthProperty().bind(tableView.widthProperty().divide(numCols));
+            occupancyCol.prefWidthProperty().bind(tableView.widthProperty().divide(numCols));
+            statusCol.prefWidthProperty().bind(tableView.widthProperty().divide(numCols));
 
             tableView.getColumns().addAll(roomIDCol, roomTypeCol, rateCol, occupancyCol, statusCol);
             tableView.setItems(roomList);
-
             tableView.setPrefHeight(400);
-            tableView.setPrefWidth(250);
 
             return tableView;
         }
@@ -571,4 +578,73 @@
 
             return guestList;
         }
+
+        public String getNextGuestID() {
+            String prefix = "G";
+            String sql = "SELECT MAX(GuestID) AS MaxID FROM Guest";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql);
+                 ResultSet rs = stmt.executeQuery()) {
+
+                if (rs.next()) {
+                    String maxID = rs.getString("MaxID");
+                    if (maxID != null) {
+                        int num = Integer.parseInt(maxID.substring(1)); // skip prefix
+                        num++;
+                        return prefix + num;
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            // If no record found, start from G100
+            return prefix + "100";
+        }
+
+        // Method to get next ReservationID in format R100, R101, ...
+        public String getNextReservationID() {
+            String prefix = "R";
+            String sql = "SELECT MAX(ReservationID) AS MaxID FROM Reservation";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql);
+                 ResultSet rs = stmt.executeQuery()) {
+
+                if (rs.next()) {
+                    String maxID = rs.getString("MaxID");
+                    if (maxID != null) {
+                        int num = Integer.parseInt(maxID.substring(1)); // skip prefix
+                        num++;
+                        return prefix + num;
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            // If no record found, start from R100
+            return prefix + "100";
+        }
+
+        // Method to get next PaymentID in format P100, P101, ...
+        public String getNextPaymentID() {
+            String prefix = "P";
+            String sql = "SELECT MAX(PaymentID) AS MaxID FROM Payment";
+            try (Connection conn = DatabaseConnection.getConnection();
+                 PreparedStatement stmt = conn.prepareStatement(sql);
+                 ResultSet rs = stmt.executeQuery()) {
+
+                if (rs.next()) {
+                    String maxID = rs.getString("MaxID");
+                    if (maxID != null) {
+                        int num = Integer.parseInt(maxID.substring(1)); // skip prefix
+                        num++;
+                        return prefix + num;
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            // If no record found, start from P100
+            return prefix + "100";
+        }
+
     }
